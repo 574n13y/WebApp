@@ -1,19 +1,80 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="mb-4">Welcome to Our Projects</h1>
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form class="d-flex search-bar" method="get">
+            <input type="text" name="search" class="form-control me-2" placeholder="Search projects..." value="{{ request.args.get('search', '') }}">
+            <button class="btn btn-outline-primary" type="submit">Search</button>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="categoryDropdown" data-bs-toggle="dropdown">
+                {{ request.args.get('category', 'All Categories') }}
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/">All Categories</a></li>
+                {% for category in categories %}
+                <li><a class="dropdown-item" href="?category={{ category }}{% if request.args.get('search') %}&search={{ request.args.get('search') }}{% endif %}">{{ category }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     {% for item in items %}
-    <div class="col-md-6">
-        <div class="card">
+    <div class="col-md-4">
+        <div class="card h-100" onclick="showItemDetails({{ item.id }})">
             <div class="card-body">
                 <h5 class="card-title">{{ item.title }}</h5>
                 <p class="card-text">{{ item.description }}</p>
-                <p class="card-text"><small class="text-muted">Date: {{ item.date }}</small></p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-primary">{{ item.category }}</span>
+                    <small class="text-muted">{{ item.date }}</small>
+                </div>
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
-{% endblock %}
 
+<!-- Item Details Modal -->
+<div class="modal fade" id="itemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="itemDescription"></p>
+                <div class="d-flex justify-content-between">
+                    <span class="badge bg-primary" id="itemCategory"></span>
+                    <small class="text-muted" id="itemDate"></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let itemModal;
+document.addEventListener('DOMContentLoaded', function() {
+    itemModal = new bootstrap.Modal(document.getElementById('itemModal'));
+});
+
+function showItemDetails(itemId) {
+    fetch(`/item/${itemId}`)
+        .then(response => response.json())
+        .then(item => {
+            document.querySelector('#itemModal .modal-title').textContent = item.title;
+            document.getElementById('itemDescription').textContent = item.description;
+            document.getElementById('itemCategory').textContent = item.category;
+            document.getElementById('itemDate').textContent = item.date;
+            itemModal.show();
+        });
+}
+</script>
+{% endblock %}
